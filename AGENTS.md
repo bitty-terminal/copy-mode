@@ -1,0 +1,5 @@
+# Copy mode repository guidance
+
+Metadata-only plugin candidate; no implementation/onboarding authorized. Read TODO, repo.toml, CarryCtx, W-135/W-138/W-139, OQ-075 and shared/plugin security contracts. Core owns selection semantics and clipboard permission gates; plugin owns modal cursor/keymap policy. Respect mouse reporting precedence, stable line identities and capability-denied behavior.
+
+English only; no hardcoded host values. Start at 0.0.1; Bun owns JS; use just gates. Metadata checks are not Lua evidence. CTX-0001 -> 0002 -> 0003 -> 0004 orders bootstrap/contracts/implementation/independent verification. Named sessions, narrow scopes, task worktrees after first commit and managed hooks required. Direct bootstrap authorized, not independent acceptance. No commit/push/release without authority; redacted snapshots only. Preserve registry pins; no silent installs/destructive cleanup/unowned process kills. Public SDK, selection/clipboard negative tests and docs synchronization gate onboarding.
