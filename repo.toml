@@ -2,13 +2,13 @@
 name = "copy-mode"
 kind = "plugin"
 lang = "lua/ts"
-role = "candidate modal-selection policy plugin; metadata-only scaffold"
+role = "candidate modal-selection policy plugin; CTX-0003 implementation in review"
 owner = "bitty-plugins"
 docs = "bitty-plugins-docs"
 
 [bootstrap]
 version = "0.0.1"
-status = "metadata-only; not onboarded"
+status = "implementation in review; not onboarded"
 
 [contracts]
-status = "search-selection accepted (bitty-terminal-docs b0514e6) + W-131 accepted (bitty-docs 21d63dc) + W-137 accepted (bitty-plugins-docs 002c7ce) + RFC-0004 accepted (bitty-docs adbb787) + host W-143 (bitty 0d50b436) + history-read (bitty 76fa42d6); CTX-0002 accepted; CTX-0003 implementation authorized"
+status = "search-selection accepted (bitty-terminal-docs b0514e6) + W-131 accepted (bitty-docs 21d63dc) + W-137 accepted (bitty-plugins-docs 002c7ce) + RFC-0004 accepted (bitty-docs adbb787) + host W-143 (bitty 0d50b436) + history-read (bitty 76fa42d6); SDK W-139 merged d915535; CTX-0002 accepted; CTX-0003 in review, CTX-0004 verification pending"

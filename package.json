@@ -1,0 +1,13 @@
+{
+  "name": "bitty-terminal.copy-mode",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Copy-mode visual selection policy over the public history snapshot host API.",
+  "packageManager": "bun@1.4.2",
+  "devDependencies": {
+    "bitty-plugin-sdk": "github:bitty-terminal/bitty-plugin-sdk#d9155350510f672ad683ff8f25dea76e97b28f89",
+    "luaparse": "0.3.1",
+    "wasmoon": "1.16.0"
+  }
+}
