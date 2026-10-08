@@ -15,7 +15,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
 import { lintManifestSource, MockHost } from "bitty-plugin-sdk";
-import { LuaFactory } from "wasmoon";
+import { LuaFactory, type LuaEngine } from "wasmoon";
 
 import {
   activateCopyMode,
@@ -97,6 +97,76 @@ function open(run: CopyModeRun, extra: Record<string, unknown> = {}): unknown {
     op: "list",
     ...extra,
   });
+}
+
+/** Canned transcript page the headless stub host serves while it has one. */
+function cannedPage(): unknown {
+  return {
+    records: [
+      { body: "redacted deploy log line one", label: "untrusted-observation" },
+      { body: "redacted deploy log line two", label: "untrusted-observation" },
+      {
+        body: "redacted deploy log line three",
+        label: "untrusted-observation",
+      },
+    ],
+    total_in_scope: 3,
+    freshness: "stub",
+  };
+}
+
+interface HeadlessHost {
+  readonly lua: LuaEngine;
+  readonly run: Record<string, (args: unknown) => Promise<unknown>>;
+  /** Replaces the `bitty` global with one exposing no transcript namespace. */
+  withoutTranscript(): void;
+}
+
+/**
+ * Headless-host shape for issue #11: `bitty` is present (activation
+ * succeeds, commands register) but the host exposes no
+ * `history.transcript` namespace, as with an empty transcript store.
+ * Built by hand because nil-ing a field on the MockHost-backed `bitty`
+ * table corrupts the wasmoon bridge instead of modeling the host.
+ */
+async function headlessHost(extra: {
+  query?: () => unknown;
+  history?: Record<string, unknown>;
+}): Promise<HeadlessHost> {
+  const factory = new LuaFactory();
+  const lua = await factory.createEngine({ injectObjects: false });
+  const run: Record<string, (args: unknown) => Promise<unknown>> = {};
+  const base = {
+    api_version: "1.0.0",
+    settings: { get: () => undefined, set: () => true },
+    commands: {
+      register: (def: {
+        id: string;
+        run: (args: unknown) => Promise<unknown>;
+      }): number => {
+        run[def.id] = def.run;
+        return 1;
+      },
+    },
+  };
+  if (extra.query !== undefined) {
+    lua.global.set("bitty", {
+      ...base,
+      history: { transcript: { query: extra.query } },
+    });
+  } else if (extra.history !== undefined) {
+    lua.global.set("bitty", { ...base, history: extra.history });
+  } else {
+    lua.global.set("bitty", base);
+  }
+  await lua.doString(ENTRY_SOURCE);
+  return {
+    lua,
+    run,
+    withoutTranscript(): void {
+      lua.global.set("bitty", base);
+    },
+  };
 }
 
 describe("manifest", () => {
@@ -443,6 +513,121 @@ describe("typed denials from the host gate", () => {
     expect(await lastCode(run)).toBe("E_HISTORY_OVER_BOUND");
     // The denied fifth query leaves the fourth page intact.
     expect(await resultCount(run)).toBe(3);
+  });
+});
+
+describe("headless nil-namespace regression (issue #11)", () => {
+  test("open denies typed when the host exposes no history namespace", async () => {
+    const host = await headlessHost({});
+    try {
+      for (const args of [
+        { panel: "pane-a", workspace: "ws-1", op: "list" },
+        {},
+      ]) {
+        const out = (await host.run["open"](args)) as {
+          ok: boolean;
+          code: string;
+        };
+        expect(out).toEqual({ ok: false, code: "E_HISTORY_UNAVAILABLE" });
+      }
+      expect(await host.lua.doString("return copymode.last_code()")).toBe(
+        "E_HISTORY_UNAVAILABLE",
+      );
+      expect(await host.lua.doString("return copymode.result_count()")).toBe(0);
+      // Sibling verbs still answer cleanly on the same host shape.
+      await host.run["move"]({ delta: 1 });
+      expect(await host.lua.doString("return copymode.last_code()")).toBe(
+        "NO_SELECTION",
+      );
+      await host.run["close"]({});
+      expect(await host.lua.doString("return copymode.last_code()")).toBe(
+        "CLEARED",
+      );
+    } finally {
+      host.lua.global.close();
+    }
+  });
+
+  test("denied refresh keeps the page when the namespace drops", async () => {
+    const host = await headlessHost({ query: cannedPage });
+    try {
+      const first = (await host.run["open"]({
+        panel: "pane-a",
+        workspace: "ws-1",
+        op: "list",
+      })) as { ok: boolean; code: string };
+      expect(first).toEqual({ ok: true, code: "OPEN" });
+      expect(await host.lua.doString("return copymode.result_count()")).toBe(3);
+      await host.run["move"]({ delta: 1 });
+      expect(await host.lua.doString("return copymode.selection_count()")).toBe(
+        2,
+      );
+      // The headless host drops the transcript namespace mid-session.
+      host.withoutTranscript();
+      const out = (await host.run["open"]({
+        panel: "pane-a",
+        workspace: "ws-1",
+        op: "list",
+      })) as { ok: boolean; code: string };
+      expect(out).toEqual({ ok: false, code: "E_HISTORY_UNAVAILABLE" });
+      expect(await host.lua.doString("return copymode.result_count()")).toBe(3);
+      expect(await host.lua.doString("return copymode.selection_count()")).toBe(
+        2,
+      );
+    } finally {
+      host.lua.global.close();
+    }
+  });
+
+  test("missing transcript leaf and non-callable query deny typed", async () => {
+    for (const history of [
+      {},
+      { transcript: {} },
+      { transcript: { query: "not-a-function" } },
+    ]) {
+      const host = await headlessHost({ history });
+      try {
+        const out = (await host.run["open"]({
+          panel: "pane-a",
+          workspace: "ws-1",
+          op: "list",
+        })) as { ok: boolean; code: string };
+        expect(out).toEqual({ ok: false, code: "E_HISTORY_UNAVAILABLE" });
+        expect(await host.lua.doString("return copymode.result_count()")).toBe(
+          0,
+        );
+      } finally {
+        host.lua.global.close();
+      }
+    }
+  });
+
+  test("yank with no selection namespace denies typed and keeps the selection", async () => {
+    const host = await headlessHost({ query: cannedPage });
+    try {
+      await host.run["open"]({
+        panel: "pane-a",
+        workspace: "ws-1",
+        op: "list",
+      });
+      expect(await host.lua.doString("return copymode.last_code()")).toBe(
+        "OPEN",
+      );
+      await host.run["move"]({ delta: 1 });
+      const out = (await host.run["yank"]({})) as {
+        ok: boolean;
+        code: string;
+      };
+      expect(out).toEqual({ ok: false, code: "E_CAPABILITY_DENIED" });
+      expect(await host.lua.doString("return copymode.last_code()")).toBe(
+        "E_CAPABILITY_DENIED",
+      );
+      expect(await host.lua.doString("return copymode.selection_count()")).toBe(
+        2,
+      );
+    } finally {
+      host.lua.global.close();
+    }
   });
 });
 
