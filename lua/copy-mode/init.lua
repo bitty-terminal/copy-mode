@@ -240,6 +240,50 @@ end
 
 local NO_HOST = "NO_HOST"
 
+-- Resolves the transcript query entry when the host provides the full
+-- namespace path; nil when any link is absent or not callable. Each link
+-- is checked before it is indexed: `pcall(bitty.history.transcript.query,
+-- opts)` evaluates `.query` BEFORE pcall runs, so a headless host with an
+-- empty transcript store (no `bitty.history` table at all) raises a VM
+-- nil-index error the pcall can never catch. The guard runs first and
+-- fails closed with the typed denial in `run_open`, never E_VM.
+local function transcript_query_fn()
+  if bitty == nil then
+    return nil
+  end
+  local history = bitty.history
+  if history == nil then
+    return nil
+  end
+  local transcript = history.transcript
+  if transcript == nil then
+    return nil
+  end
+  local query = transcript.query
+  if type(query) ~= "function" then
+    return nil
+  end
+  return query
+end
+
+-- Same guard for the grant-gated export path: without the clipboard grant
+-- the host exposes no callable `bitty.selection.copy`, and indexing it
+-- outside pcall would crash the same way.
+local function selection_copy_fn()
+  if bitty == nil then
+    return nil
+  end
+  local selection = bitty.selection
+  if selection == nil then
+    return nil
+  end
+  local copy = selection.copy
+  if type(copy) ~= "function" then
+    return nil
+  end
+  return copy
+end
+
 -- Extracts the E_* host code from a pcall error for typed diagnostics.
 local function host_code(err)
   local text = tostring(err)
@@ -325,7 +369,15 @@ local function run_open(op, panel, workspace, needle, row_count, max_bytes)
   if op == "search" then
     opts.needle = needle
   end
-  local ok, result = pcall(bitty.history.transcript.query, opts)
+  local query_fn = transcript_query_fn()
+  if query_fn == nil then
+    -- No transcript namespace on this host (headless empty store): deny
+    -- typed with the previous page and selection intact, like every other
+    -- host denial.
+    note("E_HISTORY_UNAVAILABLE", "open query unavailable; previous page kept")
+    return false, page.last_code
+  end
+  local ok, result = pcall(query_fn, opts)
   if not ok then
     -- Fail closed with the previous page intact: a denied refresh never
     -- widens into an empty set and never leaks which half failed.
@@ -454,7 +506,12 @@ function M.yank_now()
     note(M.CODE_NO_SELECTION, "no selected span to export")
     return false, page.last_code
   end
-  local ok, outcome = pcall(bitty.selection.copy, { text = text })
+  local copy_fn = selection_copy_fn()
+  if copy_fn == nil then
+    note("E_CAPABILITY_DENIED", "export unavailable; cached page kept")
+    return false, page.last_code
+  end
+  local ok, outcome = pcall(copy_fn, { text = text })
   if not ok then
     note(host_code(outcome), "export denied; cached page kept")
     return false, page.last_code

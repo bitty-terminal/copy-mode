@@ -368,16 +368,29 @@ describe("CTX-0004 headline claims against the live contract", () => {
 describe("no streaming, no session, no mouse, no terminal surface", () => {
   test("entry point reaches exactly the two granted host surfaces", () => {
     const code = codeLines().join("\n");
+    // The query/export entries resolve through nil-guarded resolvers: a
+    // headless host may expose no transcript namespace at all, and the
+    // `pcall(bitty.history.transcript.query, ...)` spelling evaluates the
+    // deep index outside pcall, so every deep reach goes through the
+    // resolvers below and their guarded call sites.
+    expect(code).toMatch(/local function transcript_query_fn/);
+    expect(code).toMatch(/local function selection_copy_fn/);
+    expect(code).toMatch(/bitty\.history/);
+    expect(code).toMatch(/history\.transcript/);
+    expect(code).toMatch(/transcript\.query/);
+    expect(code).toMatch(/bitty\.selection/);
+    expect(code).toMatch(/selection\.copy/);
+    expect(code).toMatch(/pcall\(query_fn/);
+    expect(code).toMatch(/pcall\(copy_fn/);
     const surfaces = new Set(
       [...code.matchAll(/bitty\.([A-Za-z_]+\.[A-Za-z_]+\.[A-Za-z_]+)/g)].map(
         (match) => match[1],
       ),
     );
-    // LIVE spellings (SDK d915535; live Lua wiring parked, see note below):
-    // history.transcript.query (the only three-part surface) plus
-    // selection.copy (two-part call, asserted present separately).
-    expect([...surfaces].sort()).toEqual(["history.transcript.query"]);
-    expect(code).toMatch(/bitty\.selection\.copy/);
+    // No direct three-part coupling remains: the LIVE spellings
+    // (SDK d915535) history.transcript.query and selection.copy are
+    // reached only via the guarded resolvers above.
+    expect([...surfaces].sort()).toEqual([]);
   });
 
   test("no streaming, session, mouse, terminal, or ambient authority", () => {
