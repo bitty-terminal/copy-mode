@@ -6,7 +6,7 @@
   "description": "Copy-mode visual selection policy over the public history snapshot host API.",
   "packageManager": "bun@1.4.2",
   "devDependencies": {
-    "bitty-plugin-sdk": "github:bitty-terminal/bitty-plugin-sdk#d9155350510f672ad683ff8f25dea76e97b28f89",
+    "bitty-plugin-sdk": "github:bitty-terminal/bitty-plugin-sdk#f6fc2f763aa398c0b9bb33fadfe06f0b86dbc0d2",
     "luaparse": "0.3.1",
     "wasmoon": "1.16.0"
   }

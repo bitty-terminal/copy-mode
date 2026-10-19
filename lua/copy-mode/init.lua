@@ -5,7 +5,8 @@
 -- b0514e6, PR #187), W-131 (storage-and-history boundary, bitty-docs
 -- 21d63dc), W-137 (history-and-storage policy, bitty-plugins-docs 002c7ce),
 -- and RFC-0004 (bitty-docs adbb787, PR #434, W-139 successor) bound in the
--- merged SDK surface (bitty-plugin-sdk d915535, CTX-0066 PR #144) with Core
+-- merged SDK surfaces (bitty-plugin-sdk d915535, CTX-0066 PR #144, plus the
+-- settings parity surface f6fc2f76, CTX-1225 PR #152) with Core
 -- host evidence W-143 (bitty 0d50b436) plus the history-read host (bitty
 -- 76fa42d6). This file re-expresses the extension-owned copy-mode policy
 -- (W-135: modal cursor and keymap handling is policy, selection semantics
@@ -208,6 +209,14 @@ end
 M.disabled = false
 M.disabled_reason = ""
 
+-- Settings read diagnostics. A denied read (undeclared key, invalid key, or a
+-- missing settings bridge) degrades to the shipped default and records one
+-- bounded line here instead of aborting activation or failing silently. The
+-- cap keeps the diagnostic small and free of unbounded host text.
+M.MAX_SETTINGS_DIAGNOSTIC_BYTES = 160
+M.settings_denied = false
+M.settings_diagnostic = ""
+
 local page = {
   scope_panel = nil,
   scope_workspace = nil,
@@ -292,6 +301,67 @@ local function host_code(err)
     return code
   end
   return "E_UNKNOWN"
+end
+
+-- Resolves `bitty.settings.get` when the host exposes it. Same guard shape as
+-- the history/clipboard entries: index each link only after the previous one
+-- exists, so a host without a settings namespace yields nil instead of a VM
+-- nil-index error outside pcall.
+local function settings_get_fn()
+  if bitty == nil then
+    return nil
+  end
+  local settings = bitty.settings
+  if settings == nil then
+    return nil
+  end
+  local get = settings.get
+  if type(get) ~= "function" then
+    return nil
+  end
+  return get
+end
+
+-- Clamps one diagnostic line to a fixed byte budget. The message never
+-- carries a setting value or unbounded host text, only the typed code and the
+-- static key name.
+local function bounded_diagnostic(text)
+  if #text <= M.MAX_SETTINGS_DIAGNOSTIC_BYTES then
+    return text
+  end
+  return string.sub(text, 1, M.MAX_SETTINGS_DIAGNOSTIC_BYTES - 3) .. "..."
+end
+
+-- Reads one declared setting. A denied or unavailable read degrades to the
+-- shipped default and records the first typed diagnostic; it never aborts
+-- activation, and it is never a silent no-op. Later denials keep the first
+-- line so the diagnostic stays bounded to one entry per generation.
+local function setting(key, default)
+  local get = settings_get_fn()
+  if get == nil then
+    if not M.settings_denied then
+      M.settings_denied = true
+      M.settings_diagnostic = bounded_diagnostic(
+        "E_SETTINGS_UNAVAILABLE: no settings bridge for '" .. key .. "'; shipped default used")
+    end
+    note("E_SETTINGS_UNAVAILABLE", "settings bridge unavailable; shipped default used")
+    return default
+  end
+  local ok, value = pcall(get, key)
+  if not ok then
+    local code = host_code(value)
+    if not M.settings_denied then
+      M.settings_denied = true
+      M.settings_diagnostic = bounded_diagnostic(
+        code .. ": settings read denied for '" .. key .. "'; shipped default used")
+    end
+    note(code, "settings read denied; shipped default used")
+    return default
+  end
+  if value == nil then
+    return default
+  end
+  return value
 end
 
 -- Host calls return indexable engine values (tables or bridged objects);
@@ -655,14 +725,6 @@ do
     M.disabled_reason = compat_err
     note(M.CODE_DISABLED, compat_err)
     return M
-  end
-
-  local function setting(key, default)
-    local value = bitty.settings.get(key)
-    if value == nil then
-      return default
-    end
-    return value
   end
 
   -- Default page bounds: validated, fail-closed to the documented defaults.
