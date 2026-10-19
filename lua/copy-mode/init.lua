@@ -5,7 +5,8 @@
 -- b0514e6, PR #187), W-131 (storage-and-history boundary, bitty-docs
 -- 21d63dc), W-137 (history-and-storage policy, bitty-plugins-docs 002c7ce),
 -- and RFC-0004 (bitty-docs adbb787, PR #434, W-139 successor) bound in the
--- merged SDK surface (bitty-plugin-sdk d915535, CTX-0066 PR #144) with Core
+-- merged SDK surfaces (bitty-plugin-sdk d915535, CTX-0066 PR #144, plus the
+-- settings parity surface f6fc2f76, CTX-1225 PR #152) with Core
 -- host evidence W-143 (bitty 0d50b436) plus the history-read host (bitty
 -- 76fa42d6). This file re-expresses the extension-owned copy-mode policy
 -- (W-135: modal cursor and keymap handling is policy, selection semantics

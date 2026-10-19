@@ -6,8 +6,9 @@
  * `0d50b436`, clipboard bound in `bitty-platform`), proven by the
  * ephemeral Rust scratch suite `ctx0004_copymode_live` (15 tests, all
  * green) plus Core's own suites (`history_read` 25, `search_host` 16,
- * capability 24). The mock host is the merged SDK surface at `d915535`
- * (CTX-0066 PR #144); its `historyQuery` documents the same check order
+ * capability 24). The mock host is the merged SDK surface at `f6fc2f76`
+ * (CTX-1225 PR #152, which builds on CTX-0066 PR #144 `d915535`); its
+ * `historyQuery` documents the same check order
  * the live `HistoryGate::query` enforces, and the order tests below prove
  * the mock honors it. Nothing here changes plugin behavior: no Lua or
  * manifest edits, verification evidence only.

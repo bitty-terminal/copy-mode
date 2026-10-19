@@ -6,9 +6,10 @@ the search-selection contract (bitty-terminal-docs `b0514e6`, PR #187), W-131
 (storage-and-history boundary, bitty-docs `21d63dc`), W-137
 (history-and-storage policy, bitty-plugins-docs `002c7ce`), and RFC-0004
 (bitty-docs `adbb787`, PR #434, W-139 successor); the SDK binding is
-bitty-plugin-sdk at `d915535` (merged CTX-0066 PR #144, W-139 surface). Core
-host evidence is W-143 (bitty `0d50b436`) plus the history-read host (bitty
-`76fa42d6`).
+bitty-plugin-sdk at `f6fc2f76` (merged CTX-1225 PR #152, settings lint and
+MockHost declared-key gate, on top of the CTX-0066 PR #144 `d915535` W-139
+surface). Core host evidence is W-143 (bitty `0d50b436`) plus the history-read
+host (bitty `76fa42d6`).
 
 ## Scope
 
@@ -93,7 +94,7 @@ nothing for the generation.
 
 ## SDK pin note
 
-`package.json` pins `bitty-plugin-sdk` to `3ea8e58f6e4da0ce8dcc2c8ade7fe348ec6c9ecb`,
+`package.json` pins `bitty-plugin-sdk` to `f6fc2f763aa398c0b9bb33fadfe06f0b86dbc0d2`,
 the merge commit of PR #152 (CTX-1225: manifest `[settings]` linting plus the
 MockHost declared-key gate). The previously pinned `d915535` (PR #144,
 CTX-0066, W-139 history/search/selection surface) predates `[settings]`, so

@@ -18,9 +18,9 @@
 # executes or interpolates the untrusted record bodies it selects.
 #
 # `just manifest` validates this file with the authoritative `bitty-plugin-lint`
-# from bitty-plugin-sdk (merged W-139 surface, SDK CTX-0066 PR #144 at
-# d915535), pinned by commit in `package.json` and `bun.lock`. Run
-# `just install` once to materialize it.
+# from bitty-plugin-sdk (settings-aware surface, CTX-1225 PR #152 at f6fc2f76,
+# on top of the CTX-0066 PR #144 W-139 surface d915535), pinned by commit in
+# `package.json` and `bun.lock`. Run `just install` once to materialize it.
 
 [plugin]
 id = "bitty-terminal.copy-mode"
