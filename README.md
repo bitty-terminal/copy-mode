@@ -13,7 +13,9 @@ host evidence is W-143 (bitty `0d50b436`) plus the history-read host (bitty
 ## Scope
 
 - `bitty-plugin.toml`: plugin id `bitty-terminal.copy-mode`, version `0.0.1`,
-  compat `bitty >=0.5,<1.0` with `plugin-api ^1.0`, exactly two capabilities
+  compat `bitty >=0.0.24,<0.1` with `plugin-api ^1.0`, a `[settings]` table
+  declaring exactly the two keys the entry point reads (`row_count`, `int`,
+  default `10`; `max_bytes`, `int`, default `4096`), exactly two capabilities
   (`history.transcript.read`, `clipboard.write`), lazy
   `open`/`move`/`anchor`/`yank`/`close` commands and no event subscriptions.
 - `lua/copy-mode/init.lua`: the whole policy. Snapshot query state (scope,
@@ -31,7 +33,9 @@ host evidence is W-143 (bitty `0d50b436`) plus the history-read host (bitty
   denied-refresh-keeps-selection), the typed denial taxonomy (missing grant,
   revoked, scope mismatch, over-bound, capture off, safe mode, trust, purge),
   window budgets, clipboard-grant separation, mismatch disable with fallback,
-  and denial parity against a foreign manifest plus the no-weakening proof.
+  settings-declaration parity with the entry point's read keys, bounded
+  settings-diagnostic fallback, and denial parity against a foreign manifest
+  plus the no-weakening proof.
 
 ## Rules
 
@@ -59,6 +63,13 @@ host evidence is W-143 (bitty `0d50b436`) plus the history-read host (bitty
   require an explicit new open.
 - Version/capability mismatch disables with a diagnostic and no partial
   activation: no commands exist for the generation.
+- Settings reads are declarations-bound. `row_count` and `max_bytes` are the
+  only `bitty.settings.get` keys, so exactly those two are declared in the
+  manifest; an undeclared read on the host is `E_SETTINGS_UNDECLARED` and
+  aborts activation. If a read is still denied (or the bridge is absent), the
+  plugin keeps activating on the shipped defaults and records one bounded
+  diagnostic (`settings_denied` / `settings_diagnostic`) instead of aborting
+  or failing silently.
 - Bounds mirror the SDK/Core test caps: 256-byte needle, 16 rows / 4096 bytes
   per query, 128-byte scope ids, 8192-byte copy bound (host-enforced with a
   `truncated` flag). Shapes are normative; numbers are harness placeholders.
@@ -82,13 +93,16 @@ nothing for the generation.
 
 ## SDK pin note
 
-`package.json` pins `bitty-plugin-sdk` to `d9155350510f672ad683ff8f25dea76e97b28f89`,
-the merge commit of PR #144 (CTX-0066, W-139 history/search/selection
-surface). Every spelling and bound used here (`history.transcript.query` /
-`selection.copy`, the `history.transcript.read` / `clipboard.write` gate
-pair, the 8-category denial taxonomy) derives from that merged surface plus
-the accepted contracts and the Core host commits above, never from an open
-PR branch.
+`package.json` pins `bitty-plugin-sdk` to `3ea8e58f6e4da0ce8dcc2c8ade7fe348ec6c9ecb`,
+the merge commit of PR #152 (CTX-1225: manifest `[settings]` linting plus the
+MockHost declared-key gate). The previously pinned `d915535` (PR #144,
+CTX-0066, W-139 history/search/selection surface) predates `[settings]`, so
+its linter rejected the declarations this plugin now requires. Every
+spelling and bound used here (`history.transcript.query` / `selection.copy`,
+the `history.transcript.read` / `clipboard.write` gate pair, the 8-category
+denial taxonomy, the settings kinds and bounds) derives from merged SDK
+surfaces plus the accepted contracts and the Core host commits above, never
+from an open PR branch.
 
 ## Prerequisites (CTX-0002 acceptance)
 

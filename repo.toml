@@ -11,4 +11,4 @@ version = "0.0.1"
 status = "implementation in review; not onboarded"
 
 [contracts]
-status = "search-selection accepted (bitty-terminal-docs b0514e6) + W-131 accepted (bitty-docs 21d63dc) + W-137 accepted (bitty-plugins-docs 002c7ce) + RFC-0004 accepted (bitty-docs adbb787) + host W-143 (bitty 0d50b436) + history-read (bitty 76fa42d6); SDK W-139 merged d915535; CTX-0002 accepted; CTX-0003 in review, CTX-0004 verification pending"
+status = "search-selection accepted (bitty-terminal-docs b0514e6) + W-131 accepted (bitty-docs 21d63dc) + W-137 accepted (bitty-plugins-docs 002c7ce) + RFC-0004 accepted (bitty-docs adbb787) + host W-143 (bitty 0d50b436) + history-read (bitty 76fa42d6); SDK W-139 merged d915535, settings declarations parity 3ea8e58 (PR #152); CTX-0002 accepted; CTX-0003 in review, CTX-0004 verification pending"
