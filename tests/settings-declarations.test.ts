@@ -10,10 +10,15 @@
  * the static declaration test below is the regression that fails when the
  * table or a key disappears. The activation tests then prove the declared
  * defaults register the command and that a denied read degrades to the shipped
- * default with one bounded diagnostic instead of aborting.
+ * default with one bounded diagnostic instead of aborting. The README parity
+ * test keeps the user-facing configuration table on the same key/type/default
+ * set.
  */
 
 import { describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
+
+import { checkReadmeSettings } from "../scripts/check-readme-settings.mjs";
 
 import {
   activateCopyMode,
@@ -24,6 +29,8 @@ import {
   seedTranscript,
   type CopyModeRun,
 } from "./harness.js";
+
+const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 interface SettingDeclaration {
   readonly kind: string;
@@ -78,6 +85,10 @@ describe("settings declarations match the entry point", () => {
   test("every bitty.settings.get key is declared and nothing extra is", () => {
     expect(READ_KEYS.size).toBeGreaterThan(0);
     expect([...DECLARED.keys()].sort()).toEqual([...READ_KEYS].sort());
+  });
+
+  test("the README configuration table matches the manifest", () => {
+    expect(checkReadmeSettings({ root: REPO_ROOT })).toEqual([]);
   });
 
   test("declared kinds and defaults match the plugin fallbacks", async () => {
