@@ -2,6 +2,7 @@
 .targets/
 **/target/
 .carryctx/config.local.toml
+.carryctx/state.db
 .worktrees/
 recording/
 node_modules/
