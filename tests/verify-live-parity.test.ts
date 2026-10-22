@@ -211,7 +211,8 @@ describe("live-pinned ceilings, labels, and versions", () => {
       .map((line) => line.split("=")[0].trim())
       .sort();
     expect(granted).toEqual(["clipboard.write", "history.transcript.read"]);
-    expect(MANIFEST_SOURCE).toMatch(/bitty = ">=0\.0\.24,<0\.1"/);
+    expect(MANIFEST_SOURCE).toMatch(/bitty = ">=0\.0\.24"/);
+    expect(MANIFEST_SOURCE).not.toMatch(/bitty = ">=0\.0\.24,/);
     expect(MANIFEST_SOURCE).toMatch(/plugin-api = "\^1\.0"/);
   });
 
