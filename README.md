@@ -13,7 +13,7 @@ subscribes to events; a fresh result requires a new `open`.
 
 ## Install
 
-Prerequisites: Bitty `>=0.0.24,<0.1` and Plugin API `^1.0` (from
+Prerequisites: Bitty `>=0.0.24` and Plugin API `^1.0` (from
 `bitty-plugin.toml` `[compat]`).
 
 ```sh
@@ -108,7 +108,7 @@ cannot supply; use the palette form that carries arguments, or bind `move`,
 ## Scope
 
 - `bitty-plugin.toml`: plugin id `bitty-terminal.copy-mode`, version `0.0.1`,
-  compat `bitty >=0.0.24,<0.1` with `plugin-api ^1.0`, a `[settings]` table
+  compat `bitty >=0.0.24` with `plugin-api ^1.0`, a `[settings]` table
   declaring exactly the two keys the entry point reads (`row_count`, `int`,
   default `10`; `max_bytes`, `int`, default `4096`), exactly two capabilities
   (`history.transcript.read`, `clipboard.write`), lazy
