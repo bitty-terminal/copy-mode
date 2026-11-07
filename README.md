@@ -81,7 +81,7 @@ return {
   keymaps = {
     {
       chord = "ctrl+alt+c",
-      action = "bitty-terminal.copy-mode:open",
+      action = "command:bitty-terminal.copy-mode:open",
       context = "global",
     },
   },
