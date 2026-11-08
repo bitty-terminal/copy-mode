@@ -329,8 +329,17 @@ local function bounded_diagnostic(text)
   if #text <= M.MAX_SETTINGS_DIAGNOSTIC_BYTES then
     return text
   end
-  return string.sub(text, 1, M.MAX_SETTINGS_DIAGNOSTIC_BYTES - 3) .. "..."
+  local cut = M.MAX_SETTINGS_DIAGNOSTIC_BYTES - 3
+  while cut > 0 do
+    local next_byte = string.byte(text, cut + 1)
+    if next_byte == nil or next_byte < 128 or next_byte >= 192 then
+      break
+    end
+    cut = cut - 1
+  end
+  return string.sub(text, 1, cut) .. "..."
 end
+M.bounded_diagnostic = bounded_diagnostic
 
 -- Reads one declared setting. A denied or unavailable read degrades to the
 -- shipped default and records the first typed diagnostic; it never aborts
@@ -781,7 +790,12 @@ do
     return fallback
   end
 
-  bitty.commands.register({
+  local commands = bitty.commands
+  if commands == nil or type(commands.register) ~= "function" then
+    return M
+  end
+
+  commands.register({
     id = "open",
     title = "Copy mode: open snapshot page",
     description = "Run one bounded transcript snapshot query with an explicit scope and enter visual selection over the cached page.",
@@ -798,7 +812,7 @@ do
     end,
   })
 
-  bitty.commands.register({
+  commands.register({
     id = "move",
     title = "Copy mode: move visual cursor",
     description = "Move the visual cursor over the cached page by delta rows; the anchor stays, widening or narrowing the selection.",
@@ -809,7 +823,7 @@ do
     end,
   })
 
-  bitty.commands.register({
+  commands.register({
     id = "anchor",
     title = "Copy mode: restart selection",
     description = "Restart the selection at the current cursor row; no host call.",
@@ -820,7 +834,7 @@ do
     end,
   })
 
-  bitty.commands.register({
+  commands.register({
     id = "yank",
     title = "Copy mode: yank selection",
     description = "Export the selected span through the clipboard gate; needs the separately granted clipboard.write capability.",
@@ -831,7 +845,7 @@ do
     end,
   })
 
-  bitty.commands.register({
+  commands.register({
     id = "close",
     title = "Copy mode: close page",
     description = "Drop the cached page and leave visual selection; the next open starts fresh.",
