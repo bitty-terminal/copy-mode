@@ -11,6 +11,16 @@ Rows are untrusted observation text: the plugin selects and copies them
 verbatim, never executes or interpolates them. It never streams, polls, or
 subscribes to events; a fresh result requires a new `open`.
 
+Open a page with `bitty-terminal.copy-mode:open`, which needs an explicit panel
+and/or workspace scope; the plugin installs no default chord. For example, run
+`bitty-terminal.copy-mode:open` with
+`{ panel = "<panel-id>", op = "tail", row_count = 10 }` to cache the last ten
+rows of that panel and enter selection state on the first; the command returns
+`ok` and caches the page. `move` with `{ delta = 1 }` extends the cached
+selection, `anchor` restarts it at the cursor, `yank` copies it, and `close`
+drops the page. The package paints no overlay of its own: the cached selection
+is its presentation state.
+
 ## Install
 
 Prerequisites: Bitty `>=0.0.24` and Plugin API `^1.0` (from
@@ -35,13 +45,13 @@ carries a `disabled_reason`; see [Troubleshooting](#troubleshooting).
 
 ## Commands
 
-| Command                           | What it does                                                                                                        | Arguments                                                                                                                                              | Default keybinding |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| `bitty-terminal.copy-mode:open`   | Run one bounded snapshot query with an explicit scope and enter visual selection on the first row.                  | `panel` (string), `workspace` (string), `op` (`list`\|`tail`\|`search`, default `list`), `needle` (string), `row_count` (number), `max_bytes` (number) | None               |
-| `bitty-terminal.copy-mode:move`   | Move the visual cursor by `delta` rows over the cached page; the anchor stays, widening or narrowing the selection. | `delta` (number, default `1`, nonzero integer)                                                                                                         | None               |
-| `bitty-terminal.copy-mode:anchor` | Restart the selection at the current cursor row; no host call.                                                      | None                                                                                                                                                   | None               |
-| `bitty-terminal.copy-mode:yank`   | Export the selected span through the clipboard gate; needs `clipboard.write`.                                       | None                                                                                                                                                   | None               |
-| `bitty-terminal.copy-mode:close`  | Drop the cached page and leave visual selection; the next open starts fresh.                                        | None                                                                                                                                                   | None               |
+| Command                           | What it does                                                                                                        | Arguments                                                                                                                                                            | Default keybinding |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `bitty-terminal.copy-mode:open`   | Run one bounded snapshot query with an explicit scope and enter visual selection on the first row.                  | `panel` (string), `workspace` (string), `op` (`list`\|`tail`\|`search`, default `list`), `needle` (string), `row_count` (number, 1–16), `max_bytes` (number, 1–4096) | None               |
+| `bitty-terminal.copy-mode:move`   | Move the visual cursor by `delta` rows over the cached page; the anchor stays, widening or narrowing the selection. | `delta` (number, default `1`, nonzero integer)                                                                                                                       | None               |
+| `bitty-terminal.copy-mode:anchor` | Restart the selection at the current cursor row; no host call.                                                      | None                                                                                                                                                                 | None               |
+| `bitty-terminal.copy-mode:yank`   | Export the selected span through the clipboard gate; needs `clipboard.write`.                                       | None                                                                                                                                                                 | None               |
+| `bitty-terminal.copy-mode:close`  | Drop the cached page and leave visual selection; the next open starts fresh.                                        | None                                                                                                                                                                 | None               |
 
 `open` requires an explicit panel and/or workspace scope (never `*` or `all`)
 and a `needle` for `op = "search"`. `row_count` and `max_bytes` default to the
@@ -80,17 +90,18 @@ user mapping in `$XDG_CONFIG_HOME/bitty/init.lua`; user mappings keep precedence
 return {
   keymaps = {
     {
-      chord = "ctrl+alt+c",
-      action = "command:bitty-terminal.copy-mode:open",
+      chord = "ctrl+alt+j",
+      action = "command:bitty-terminal.copy-mode:move",
       context = "global",
     },
   },
 }
 ```
 
-`open` needs an explicit panel or workspace scope, which a bare keymap entry
-cannot supply; use the palette form that carries arguments, or bind `move`,
-`anchor`, `yank`, and `close` for the in-session verbs.
+`move` defaults to a one-row step, so it is safe to bind bare. `open` needs an
+explicit panel or workspace scope, which a bare keymap entry cannot supply; use
+the palette form that carries arguments, or bind `anchor`, `yank`, and `close`
+for the in-session verbs.
 
 ## Troubleshooting
 
