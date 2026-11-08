@@ -703,4 +703,29 @@ describe("mismatch disables with a diagnostic; fallback stays Core", () => {
     run.host.dispose();
     expect(() => dispatch(run, OPEN_COMMAND, {})).toThrow();
   });
+
+  test("bounded_diagnostic backs off UTF-8 continuation bytes and headless activation without commands does not crash (copy-mode#24)", async () => {
+    const factory = new LuaFactory();
+    const lua = await factory.createEngine({ injectObjects: false });
+    try {
+      lua.global.set("bitty", {
+        api_version: "1.0.0",
+        settings: { get: () => undefined, set: () => true },
+      });
+      await lua.doString(ENTRY_SOURCE);
+      // 155 ASCII bytes + 3-byte "中" (bytes 156..158) + 10 ASCII bytes = 168 bytes (> 160).
+      // Raw byte cut at 157 (MAX_SETTINGS_DIAGNOSTIC_BYTES - 3) would split "中" after byte 2.
+      // UTF-8 boundary cut backs off to 155, keeping 155 ASCII bytes + "..." (158 bytes).
+      const prefix = "a".repeat(155);
+      const input = `${prefix}中${"b".repeat(10)}`;
+      lua.global.set("test_input", input);
+      const bounded = (await lua.doString(
+        "return copymode.bounded_diagnostic(test_input)",
+      )) as string;
+      expect(bounded).toBe(`${prefix}...`);
+      expect(Buffer.byteLength(bounded, "utf8")).toBe(158);
+    } finally {
+      lua.global.close();
+    }
+  });
 });
