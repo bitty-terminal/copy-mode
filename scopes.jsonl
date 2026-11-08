@@ -31,3 +31,5 @@
 {"created_at":"2026-10-04T13:38:21.245856195+00:00","id":"01M43J64DXAAC6DF9A2F3WVBXY","kind":"include","pattern":"tests/harness.ts","project_id":"01M3Y7H906MWTJP7KFDW60Z8KT","task_id":"01M3Y7H99WKZRNDA2T74W1ENKS"}
 {"created_at":"2026-10-04T13:38:21.267518004+00:00","id":"01M43J64EK46FHRHY4E7PC9Q20","kind":"include","pattern":"tests/copy-mode.test.ts","project_id":"01M3Y7H906MWTJP7KFDW60Z8KT","task_id":"01M3Y7H99WKZRNDA2T74W1ENKS"}
 {"created_at":"2026-10-04T13:38:21.288712903+00:00","id":"01M43J64F87ZS2NEN6887PCG4K","kind":"include","pattern":"tests/verify-parity.test.ts","project_id":"01M3Y7H906MWTJP7KFDW60Z8KT","task_id":"01M3Y7H99WKZRNDA2T74W1ENKS"}
+{"created_at":"2026-10-08T18:51:15.608232301+00:00","id":"01M4EDNYRRM8KVKJTVA36C5DGN","kind":"include","pattern":"lua/copy-mode/init.lua","project_id":"01M3Y7H906MWTJP7KFDW60Z8KT","task_id":"01M4EDNGSE55JP9B34WXQ9MY10"}
+{"created_at":"2026-10-08T18:51:15.642650055+00:00","id":"01M4EDNYST39F52MA5F8NRTT9D","kind":"include","pattern":"tests/copy-mode.test.ts","project_id":"01M3Y7H906MWTJP7KFDW60Z8KT","task_id":"01M4EDNGSE55JP9B34WXQ9MY10"}
